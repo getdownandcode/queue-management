@@ -1,0 +1,16 @@
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Bar, Line } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend } from 'chart.js';
+import { api } from '../api';
+import Navbar from '../components/Navbar';
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend);
+const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#eee' } }, y: { beginAtZero: true, grid: { color: '#eee' } } } };
+export default function Dashboard() {
+  const [params, setParams] = useSearchParams(); const [queues, setQueues] = useState([]); const [data, setData] = useState(null); const [error, setError] = useState(''); const [loading, setLoading] = useState(true); const selected = params.get('queue') || '';
+  useEffect(() => { api('/queues').then(list => { setQueues(list); if (!selected && list.length) setParams({ queue: String(list[0].id) }, { replace: true }); }).catch(e => setError(e.message)).finally(() => setLoading(false)); }, []);
+  useEffect(() => { if (!selected) return; setLoading(true); api(`/queues/${selected}/analytics`).then(setData).catch(e => setError(e.message)).finally(() => setLoading(false)); }, [selected]);
+  const labels = data?.queue_length_by_hour.map(x => x.hour) || [];
+  const axis = { ...chartOptions, scales: { ...chartOptions.scales, x: { ...chartOptions.scales.x, ticks: { maxTicksLimit: 12 } } } };
+  return <><Navbar /><main className="container"><div className="topline"><h1>Dashboard</h1><select aria-label="Select queue" value={selected} onChange={e => setParams({ queue: e.target.value })}><option value="" disabled>Select a queue</option>{queues.map(q => <option key={q.id} value={q.id}>{q.name}</option>)}</select></div>{error && <div className="error" role="alert">{error}</div>}{loading ? <p className="muted">Loading analytics…</p> : !queues.length ? <section className="card"><p className="muted">Create a queue to see analytics.</p></section> : data && <><section className="card"><h2>Today</h2><div className="cards">{[['Tokens today', data.summary.total_today], ['Waiting now', data.summary.currently_waiting], ['Average wait', `${Number(data.summary.average_wait_minutes).toFixed(1)} min`], ['Longest wait', `${Number(data.summary.longest_wait_minutes).toFixed(1)} min`], ['Cancelled', data.summary.cancelled_today]].map(([label, value]) => <div className="stat" key={label}><span className="muted">{label}</span><strong>{value}</strong></div>)}</div></section><section className="card"><h2>Queue length by hour</h2><div className="chart"><Line data={{ labels, datasets: [{ label: 'Waiting', data: data.queue_length_by_hour.map(x => x.length), borderColor: '#333', backgroundColor: '#777', pointRadius: 2, tension: 0.2 }] }} options={axis} /></div></section><section className="card"><h2>Average wait by hour</h2><div className="chart"><Bar data={{ labels, datasets: [{ label: 'Minutes', data: data.average_wait_by_hour.map(x => x.average_wait_minutes), backgroundColor: '#555' }] }} options={axis} /></div></section></>}</main></>;
+}

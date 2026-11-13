@@ -1,0 +1,3 @@
+export default function TokenRow({ token, index, count, busy, onMove, onCancel, waitingSince }) {
+  return <div className="token-row"><strong>#{index + 1}</strong><span>#{token.token_number}</span><span>{token.name}</span><span className="wait muted">{waitingSince}</span><div className="token-controls"><button className="outline" aria-label="Move up" disabled={busy || index === 0} onClick={() => onMove(token.id, 'up')}>↑</button><button className="outline" aria-label="Move down" disabled={busy || index === count - 1} onClick={() => onMove(token.id, 'down')}>↓</button><button className="outline" disabled={busy} onClick={() => onCancel(token.id)}>Cancel</button></div></div>;
+}

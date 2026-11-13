@@ -1,0 +1,8 @@
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { send, setToken } from '../api';
+export default function Login() {
+  const [signup, setSignup] = useState(false); const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [error, setError] = useState(''); const [busy, setBusy] = useState(false); const navigate = useNavigate();
+  async function submit(event) { event.preventDefault(); setBusy(true); setError(''); try { const data = await send(`/auth/${signup ? 'signup' : 'login'}`, 'POST', { email, password }); setToken(data.token); navigate('/queues'); } catch (err) { setError(err.message); } finally { setBusy(false); } }
+  return <main className="container"><section className="card auth-card"><h1>{signup ? 'Create manager account' : 'Log in'}</h1><form onSubmit={submit}><div className="field"><label htmlFor="email">Email</label><input id="email" type="email" required value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" /></div><div className="field"><label htmlFor="password">Password</label><input id="password" type="password" required minLength={signup ? 8 : undefined} value={password} onChange={e => setPassword(e.target.value)} autoComplete={signup ? 'new-password' : 'current-password'} /></div>{error && <div className="error" role="alert">{error}</div>}<button disabled={busy}>{busy ? 'Please wait…' : signup ? 'Sign up' : 'Log in'}</button></form><p>{signup ? 'Already registered?' : 'New manager?'} <button className="outline" onClick={() => { setSignup(!signup); setError(''); }}>{signup ? 'Log in' : 'Create an account'}</button></p><Link to="/login" aria-label="Login page" style={{ display: 'none' }}>Login</Link></section></main>;
+}
