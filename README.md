@@ -43,34 +43,38 @@ Open the local URL printed by Vite (usually `http://localhost:5173`). Create a m
 
 ```text
 queue-manager/
-  README.md
-  .gitignore
-  server/
-    package.json
-    .env.example
-    src/
-      index.js
-      db.js
-      auth.js
-      queues.js
-      analytics.js
-  client/
-    package.json
-    index.html
-    vite.config.js
-    src/
-      main.jsx
-      api.js
-      styles.css
-      pages/
-        Login.jsx
-        Queues.jsx
-        QueueDetail.jsx
-        Dashboard.jsx
-      components/
-        Navbar.jsx
-        TokenRow.jsx
+├── README.md
+├── .gitignore
+├── client/                     # React + Vite frontend
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── vite.config.js
+│   └── src/
+│       ├── main.jsx            # App entry and routes
+│       ├── api.js              # Fetch helpers with JWT header
+│       ├── styles.css          # Design system and page styles
+│       ├── components/
+│       │   ├── Navbar.jsx
+│       │   └── TokenRow.jsx
+│       └── pages/
+│           ├── Login.jsx
+│           ├── Queues.jsx
+│           ├── QueueDetail.jsx
+│           └── Dashboard.jsx
+└── server/                     # Express + SQLite backend
+    ├── package.json
+    ├── package-lock.json
+    ├── .env.example
+    └── src/
+        ├── index.js            # App entry and error handling
+        ├── db.js               # SQLite schema
+        ├── auth.js             # Signup, login, JWT middleware
+        ├── queues.js           # Queue and token endpoints
+        └── analytics.js        # Daily analytics endpoint
 ```
+
+`server/.env` and `server/queue-manager.db` are local only and never committed.
 
 ## API endpoints
 
@@ -82,6 +86,8 @@ All queue and analytics endpoints require `Authorization: Bearer <JWT>`.
 | POST | `/api/auth/login` | Log in and return a JWT |
 | GET | `/api/queues` | List the manager's queues |
 | POST | `/api/queues` | Create a queue |
+| PATCH | `/api/queues/:id` | Rename a queue |
+| DELETE | `/api/queues/:id` | Delete a queue and its tokens |
 | GET | `/api/queues/:id` | Read queue, waiting tokens, and serving token |
 | POST | `/api/queues/:queueId/tokens` | Add a named person |
 | PATCH | `/api/queues/:queueId/tokens/:tokenId/move` | Move a waiting token (`direction: up/down`) |

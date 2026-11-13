@@ -28,6 +28,22 @@ router.post('/queues', (req, res) => {
     throw error;
   }
 });
+router.patch('/queues/:id', ownedQueue, (req, res) => {
+  const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+  if (!name) return res.status(400).json({ error: 'Queue name is required.' });
+  if (name.length > 50) return res.status(400).json({ error: 'Queue name must be 50 characters or fewer.' });
+  try {
+    db.prepare('UPDATE queues SET name = ? WHERE id = ?').run(name, req.queue.id);
+    res.json(db.prepare('SELECT id, name, created_at FROM queues WHERE id = ?').get(req.queue.id));
+  } catch (error) {
+    if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') return res.status(409).json({ error: 'You already have a queue with that name.' });
+    throw error;
+  }
+});
+router.delete('/queues/:id', ownedQueue, (req, res) => {
+  db.prepare('DELETE FROM queues WHERE id = ?').run(req.queue.id);
+  res.json({ ok: true });
+});
 router.get('/queues/:id', ownedQueue, (req, res) => {
   const waiting = db.prepare("SELECT id, token_number, name, status, position, created_at, started_at FROM tokens WHERE queue_id = ? AND status = 'waiting' ORDER BY position").all(req.queue.id);
   const serving = db.prepare("SELECT id, token_number, name, status, position, created_at, started_at FROM tokens WHERE queue_id = ? AND status = 'serving' ORDER BY started_at LIMIT 1").get(req.queue.id) || null;
